@@ -16,7 +16,7 @@ const isValidPhone = (phone: string): boolean =>
 
 const VALID_ROLES: UserRole[] = ["super_admin", "admin", "logistics_staff", "rider"];
 
-const validatePasswordStrength = (
+export const validatePasswordStrength = (
   password: string,
 ): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];

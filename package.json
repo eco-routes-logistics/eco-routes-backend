@@ -7,7 +7,11 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "create-admin": "ts-node src/scripts/create-super-admin.ts",
+    "seed:demo": "ts-node src/scripts/seed-demo-accounts.ts",
+    "create-admin:prod": "node dist/scripts/create-super-admin.js",
+    "seed:demo:prod": "node dist/scripts/seed-demo-accounts.js"
   },
   "dependencies": {
     "@types/multer": "^2.1.0",

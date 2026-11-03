@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import User from "../models/user.model";
 import { generateToken } from "../utils/jwt.utils";
 import { sendSuccess, sendError, HTTP } from "../utils/response.utils";
-import { RegisterRequest, LoginRequest, IUser } from "../types/auth.types";
+import { LoginRequest, IUser } from "../types/auth.types";
 
 const formatUserResponse = (user: {
   id?: string;
@@ -27,53 +27,6 @@ const formatUserResponse = (user: {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
-};
-
-export const register = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { name, email, phone, password, role } = req.body as RegisterRequest;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      sendError(
-        res,
-        "An account with this email already exists. Please use a different email or log in instead.",
-        HTTP.CONFLICT,
-      );
-      return;
-    }
-
-    const newUser = await User.create({
-      name,
-      email,
-      phone,
-      password,
-      role,
-      isActive: true,
-    });
-
-    const token = generateToken({
-      id: String(newUser._id),
-      email: newUser.email,
-      role: newUser.role as IUser["role"],
-    });
-
-    const formattedUser = formatUserResponse(newUser.toJSON());
-
-    sendSuccess(
-      res,
-      { user: formattedUser, token },
-      "User registered successfully",
-      HTTP.CREATED,
-    );
-  } catch (error) {
-    console.error("Registration error", error);
-    sendError(
-      res,
-      "An error occurred during registration. Please try again.",
-      HTTP.SERVER_ERROR,
-    );
-  }
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {

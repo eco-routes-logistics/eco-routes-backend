@@ -1,13 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken, verifyClientToken, verifyRiderToken, extractTokenFromHeader } from "../utils/jwt.utils";
 import { sendError, HTTP } from "../utils/response.utils";
-import { UserRole } from "../types/auth.types";
+import { JwtPayload, UserRole } from "../types/auth.types";
+import User from "../models/user.model";
 
-export const protect = (
+// Roles allowed into the staff console. "rider" exists on the User model but riders
+// authenticate through their own collection and token (protectRider).
+const STAFF_ROLES: UserRole[] = ["super_admin", "admin", "logistics_staff"];
+
+export const protect = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     const token = extractTokenFromHeader(authHeader as string | undefined);
@@ -20,8 +25,23 @@ export const protect = (
       );
       return;
     }
-    const decodedPayload = verifyToken(token);
-    req.user = decodedPayload;
+    const decodedPayload = verifyToken(token) as JwtPayload & { tokenType?: string };
+
+    // Client and rider tokens are signed with the same secret, so reject them explicitly
+    if (decodedPayload.tokenType) {
+      sendError(res, "Invalid token type for this endpoint.", HTTP.UNAUTHORIZED);
+      return;
+    }
+
+    // Re-check the account on every request so deactivation and role changes apply
+    // immediately instead of when the token expires
+    const user = await User.findById(decodedPayload.id).select("role isActive");
+    if (!user || !user.isActive || !STAFF_ROLES.includes(user.role as UserRole)) {
+      sendError(res, "Your account no longer has access. Please contact an administrator.", HTTP.UNAUTHORIZED);
+      return;
+    }
+
+    req.user = { ...decodedPayload, role: user.role as UserRole };
 
     next();
   } catch (error) {

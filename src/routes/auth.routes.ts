@@ -1,14 +1,12 @@
 import { Router } from "express";
 import { protect } from "../middleware/auth.middleware";
-import {
-  validateRegister,
-  validateLogin,
-} from "../middleware/validate.middleware";
-import { register, login, getMe, logout } from "../controllers/auth.controller";
+import { validateLogin } from "../middleware/validate.middleware";
+import { login, getMe, logout } from "../controllers/auth.controller";
 const router = Router();
 
-// POST /api/v1/auth/register
-router.post("/register", validateRegister, register);
+// There is deliberately no public /register route: it let anyone create a staff
+// account with any role (including super_admin). Staff accounts are created by
+// admins via POST /team/users, and the first super admin via `npm run create-admin`.
 
 // POST /api/v1/auth/login
 router.post("/login", validateLogin, login);
