@@ -16,14 +16,20 @@ const isValidPhone = (phone: string): boolean =>
 
 const VALID_ROLES: UserRole[] = ["super_admin", "admin", "logistics_staff", "rider"];
 
+// Customers and riders may use short passwords; staff accounts (full data access) keep a longer minimum.
+// Login endpoints are rate-limited in server.ts, which is what makes short passwords tolerable.
+export const CUSTOMER_PASSWORD_MIN = 5;
+export const STAFF_PASSWORD_MIN = 8;
+
 export const validatePasswordStrength = (
   password: string,
+  minLength: number = STAFF_PASSWORD_MIN,
 ): { isValid: boolean; errors: string[] } => {
   // Length only, no character-class rules (per NIST SP 800-63B: composition rules push
   // people toward predictable passwords like "Password1!"). The upper bound keeps bcrypt
   // input reasonable (it only uses the first 72 bytes).
   const errors: string[] = [];
-  if (password.length < 8) errors.push("Password must be at least 8 characters long");
+  if (password.length < minLength) errors.push(`Password must be at least ${minLength} characters long`);
   if (password.length > 128) errors.push("Password must be at most 128 characters long");
   return { isValid: errors.length === 0, errors };
 };
@@ -113,7 +119,7 @@ export const validateClientRegisterPayAsYouGo = (
   if (!password || typeof password !== "string" || password.length === 0) {
     errors.push({ field: "password", message: "Password is required" });
   } else {
-    const { isValid, errors: pwErrors } = validatePasswordStrength(password);
+    const { isValid, errors: pwErrors } = validatePasswordStrength(password, CUSTOMER_PASSWORD_MIN);
     if (!isValid) pwErrors.forEach((msg) => errors.push({ field: "password", message: msg }));
   }
 
@@ -366,7 +372,7 @@ export const validateRiderRegister = (req: Request, res: Response, next: NextFun
   if (!password || typeof password !== "string" || password.length === 0) {
     errors.push({ field: "password", message: "Password is required" });
   } else {
-    const { isValid, errors: pwErrors } = validatePasswordStrength(password);
+    const { isValid, errors: pwErrors } = validatePasswordStrength(password, CUSTOMER_PASSWORD_MIN);
     if (!isValid) pwErrors.forEach((msg) => errors.push({ field: "password", message: msg }));
   }
 

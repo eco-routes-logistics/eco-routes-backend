@@ -77,8 +77,18 @@ const authLimiter = rateLimit({
 });
 
 app.use("/api/v1", apiLimiter as RequestHandler);
-app.use("/api/v1/auth", authLimiter as RequestHandler);
-app.use("/api/v1/client-auth", authLimiter as RequestHandler);
+// Only the credential endpoints, for all three account types. Applying it to whole
+// routers (e.g. /client-auth) also throttled normal page loads like /client-auth/me.
+app.use(
+  [
+    "/api/v1/auth/login",
+    "/api/v1/client-auth/login",
+    "/api/v1/client-auth/register",
+    "/api/v1/rider-auth/login",
+    "/api/v1/rider-auth/register",
+  ],
+  authLimiter as RequestHandler,
+);
 
 app.use(morgan("dev"));
 app.use(express.json({ limit: "1mb" }));
