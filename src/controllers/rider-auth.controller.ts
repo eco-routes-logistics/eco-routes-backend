@@ -158,6 +158,7 @@ export const riderLogin = async (req: Request, res: Response): Promise<void> => 
     sendSuccess(res, {
       rider: {
         id:        rider.id,
+        name:      `${rider.firstName} ${rider.lastName}`.trim(),
         firstName: rider.firstName,
         lastName:  rider.lastName,
         email:     rider.email,
